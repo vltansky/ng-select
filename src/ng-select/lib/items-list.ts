@@ -171,10 +171,6 @@ export class ItemsList {
     }
 
     resetFilteredItems() {
-        if (this._filteredItems.length === this._items.length) {
-            return;
-        }
-
         if (this._ngSelect.hideSelected && this.selectedItems.length > 0) {
             this._filteredItems = this._items.filter(x => !x.selected);
         } else {
