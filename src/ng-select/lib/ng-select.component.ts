@@ -456,6 +456,7 @@ export class NgSelectComponent implements OnDestroy, OnChanges, AfterViewInit, C
     }
 
     select(item: NgOption) {
+        this._isComposing = false;
         if (!item.selected) {
             this.itemsList.select(item);
             if (this.clearSearchOnAdd && !this._editableSearchTerm) {
