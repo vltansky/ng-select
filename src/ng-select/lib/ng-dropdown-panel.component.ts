@@ -216,7 +216,13 @@ export class NgDropdownPanelComponent implements OnInit, OnChanges, OnDestroy {
         this._zone.runOutsideAngular(() => {
             fromEvent(this.scrollElementRef.nativeElement, 'scroll')
                 .pipe(takeUntil(this._destroy$), auditTime(0, SCROLL_SCHEDULER))
-                .subscribe((e: { target: HTMLElement }) => this._onContentScrolled(e.target.scrollTop));
+                .subscribe((e: { path, composedPath }) => {
+                    const path = e.path || (e.composedPath && e.composedPath());
+                    if (!path) {
+                        return
+                    }
+                    this._onContentScrolled(path[0].scrollTop);
+                });
         });
     }
 
@@ -230,7 +236,7 @@ export class NgDropdownPanelComponent implements OnInit, OnChanges, OnDestroy {
                 fromEvent(this._document, 'touchstart', { capture: true }),
                 fromEvent(this._document, 'mousedown', { capture: true })
             ).pipe(takeUntil(this._destroy$))
-             .subscribe($event => this._checkToClose($event));
+                .subscribe($event => this._checkToClose($event));
         });
     }
 
@@ -255,6 +261,7 @@ export class NgDropdownPanelComponent implements OnInit, OnChanges, OnDestroy {
         if (this.virtualScroll) {
             this._updateItemsRange(firstChange);
         } else {
+            this._setVirtualHeight();
             this._updateItems(firstChange);
         }
     }
@@ -301,6 +308,15 @@ export class NgDropdownPanelComponent implements OnInit, OnChanges, OnDestroy {
             this._virtualPadding.style.height = `${height}px`;
             this._updateScrollHeight = false;
         }
+    }
+
+    private _setVirtualHeight() {
+
+        if (!this._virtualPadding) {
+            return;
+        }
+
+        this._virtualPadding.style.height = `0px`;
     }
 
     private _onItemsLengthChanged() {
@@ -384,7 +400,7 @@ export class NgDropdownPanelComponent implements OnInit, OnChanges, OnDestroy {
         }
 
         this._parent = document.querySelector(this.appendTo);
-        if (!parent) {
+        if (!this._parent) {
             throw new Error(`appendTo selector ${this.appendTo} did not found any parent element`);
         }
         this._parent.appendChild(this._dropdown);
