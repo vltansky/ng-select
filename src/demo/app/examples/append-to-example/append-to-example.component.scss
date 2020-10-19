@@ -7,3 +7,9 @@
     border: 1px solid #999;
     overflow: hidden;
 }
+
+.scrollable-box {
+    position: relative;
+    height: 400px;
+    overflow: auto;
+}

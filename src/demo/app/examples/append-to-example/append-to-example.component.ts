@@ -5,13 +5,14 @@ import { DataService } from '../data.service';
     selector: 'append-to-example',
     templateUrl: './append-to-example.component.html',
     styleUrls: ['./append-to-example.component.scss'],
-    encapsulation: ViewEncapsulation.ShadowDom,
+//     encapsulation: ViewEncapsulation.ShadowDom,
 })
 export class AppendToExampleComponent implements OnInit {
 
     people: any = [];
     selected: any;
     selected2: any;
+    selected3: any;
 
     constructor(private dataService: DataService) {
     }
