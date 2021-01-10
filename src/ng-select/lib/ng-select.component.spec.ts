@@ -2971,6 +2971,7 @@ describe('NgSelectComponent', () => {
         let fixture: ComponentFixture<NgSelectTestCmp>;
         let select: NgSelectComponent;
         let input: HTMLInputElement;
+        let comboBoxDiv: HTMLDivElement;
 
         beforeEach(fakeAsync(() => {
             fixture = createTestingModule(
@@ -2982,6 +2983,7 @@ describe('NgSelectComponent', () => {
                 </ng-select>`);
             select = fixture.componentInstance.select;
             input = fixture.debugElement.query(By.css('input')).nativeElement;
+            comboBoxDiv = fixture.debugElement.query(By.css('.ng-input')).nativeElement;
         }));
 
         it('should set aria-activedescendant absent at start', fakeAsync(() => {
@@ -2990,7 +2992,7 @@ describe('NgSelectComponent', () => {
         }));
 
         it('should set aria-owns absent at start', fakeAsync(() => {
-            expect(input.hasAttribute('aria-owns'))
+            expect(comboBoxDiv.hasAttribute('aria-owns'))
                 .toBe(false);
         }));
 
@@ -2998,7 +3000,33 @@ describe('NgSelectComponent', () => {
             triggerKeyDownEvent(getNgSelectElement(fixture), KeyCode.Space);
             tickAndDetectChanges(fixture);
 
-            expect(input.getAttribute('aria-owns'))
+            expect(comboBoxDiv.getAttribute('aria-owns'))
+                .toBe(select.dropdownId);
+        }));
+
+        it('should set aria-expanded to false at start', fakeAsync(() => {
+            expect(comboBoxDiv.getAttribute('aria-expanded'))
+                .toBe('false');
+        }));
+
+        it('should set aria-expanded to true on open', fakeAsync(() => {
+            triggerKeyDownEvent(getNgSelectElement(fixture), KeyCode.Space);
+            tickAndDetectChanges(fixture);
+
+            expect(comboBoxDiv.getAttribute('aria-expanded'))
+                .toBe('true');
+        }));
+
+        it('should set aria-controls absent at start', fakeAsync(() => {
+            expect(input.hasAttribute('aria-controls'))
+                .toBe(false);
+        }));
+
+        it('should set aria-controls to dropdownId on open', fakeAsync(() => {
+            triggerKeyDownEvent(getNgSelectElement(fixture), KeyCode.Space);
+            tickAndDetectChanges(fixture);
+
+            expect(input.getAttribute('aria-controls'))
                 .toBe(select.dropdownId);
         }));
 
@@ -3800,6 +3828,35 @@ describe('NgSelectComponent', () => {
 
 
             expect(hasClass).toBe(true);
+        }));
+
+        it('should correctly update ng option selected property when groups map has undefined key', fakeAsync(() => {
+            const fixture = createTestingModule(
+              NgSelectGroupingTestCmp,
+              `<ng-select [items]="accounts"
+                        groupBy="group"
+                        bindLabel="name"
+                        bindValue="email"
+                        [(ngModel)]="selectedAccount"
+                        [class]="'test'">
+                </ng-select>`);
+
+            const select = fixture.componentInstance.select;
+            const nativeElement: HTMLElement = fixture.nativeElement as HTMLElement;
+
+            select.filter('Adam');
+            selectOption(fixture, KeyCode.ArrowDown, 0);
+            expect(fixture.componentInstance.selectedAccount).toBe('adam@email.com');
+
+            select.filter('Amalie');
+            selectOption(fixture, KeyCode.ArrowDown, 0);
+            expect(fixture.componentInstance.selectedAccount).toBe('amalie@email.com');
+
+            select.filter('A');
+            expect(nativeElement.querySelectorAll('.ng-option-selected').length).toBe(1, 2);
+            expect(select.viewPortItems.filter((opt => opt.selected)).length).toBe(1, 2);
+            expect(select.viewPortItems.find((opt => opt.selected)).index).toBe(2, 0);
+            expect(select.itemsList.selectedItems.length).toBe(1);
         }));
     });
 
