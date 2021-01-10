@@ -1,10 +1,10 @@
 {
-  "name": "@ng-select/ng-select",
-  "version": "3.2.0",
+  "name": "@vltansky/ng-select",
+  "version": "3.2.2",
   "description": "Angular ng-select - All in One UI Select, Multiselect and Autocomplete",
-  "author": "@ng-select/ng-select",
+  "author": "@vltansky/ng-select",
   "license": "MIT",
-  "repository": "ng-select/ng-select",
+  "repository": "vltansky/ng-select",
   "engines": {
     "node": ">= 6.9.0",
     "npm": ">= 3.0.0"
@@ -19,8 +19,11 @@
     "angular2"
   ],
   "peerDependencies": {
-    "@angular/common": ">=9.0.0 <10.0.0",
-    "@angular/core": ">=9.0.0 <10.0.0",
-    "@angular/forms": ">=9.0.0 <10.0.0"
+    "@angular/common": ">=10.0.0 <11.0.0",
+    "@angular/core": ">=10.0.0 <11.0.0",
+    "@angular/forms": ">=10.0.0 <11.0.0"
+  },
+  "dependencies": {
+    "tslib": "^2.0.0"
   }
 }

@@ -1056,6 +1056,55 @@ describe('NgSelectComponent', () => {
             expect(options[0].innerText).toBe('a');
         }));
 
+        it('should always have div #padding with height 0 in dropdown panel when virtual scroll is disabled', fakeAsync(() => {
+            const fixture = createTestingModule(
+                NgSelectTestCmp,
+                `<ng-select [items]="cities"
+                            bindLabel="name"
+                            [virtualScroll]="false">
+                </ng-select>`);
+
+            const select = fixture.componentInstance.select;
+            select.open();
+
+            const panelItems = document.querySelector('.ng-dropdown-panel-items');
+            const firstChild = <HTMLScriptElement>panelItems.firstChild;
+
+            expect(firstChild.offsetHeight).toBe(0);
+        }));
+
+        it('should have div #padding with height other than 0 in dropdown panel when virtual scroll is enabled', fakeAsync(() => {
+
+            const fixture = createTestingModule(
+                NgSelectTestCmp,
+                `<ng-select [items]="cities"
+                            bindLabel="name"
+                            [virtualScroll]="true">
+                </ng-select>`);
+
+            const select = fixture.componentInstance.select;
+            select.open();
+
+            tickAndDetectChanges(fixture);
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.select.dropdownPanel.items.length).toBe(3);
+            let options = fixture.debugElement.nativeElement.querySelectorAll('.ng-option');
+            expect(options.length).toBe(3);
+            expect(options[0].innerText).toBe('Vilnius');
+            expect(options[1].innerText).toBe('Kaunas');
+            expect(options[2].innerText).toBe('Pabrade');
+
+            fixture.componentInstance.cities = Array.from(Array(30).keys()).map((_, i) => ({ id: i, name: String.fromCharCode(97 + i) }));
+            tickAndDetectChanges(fixture);
+            fixture.detectChanges();
+
+            const panelItems = document.querySelector('.ng-dropdown-panel-items');
+            const firstChild = <HTMLScriptElement>panelItems.firstChild;
+
+            expect(firstChild.offsetHeight).not.toBe(0);
+        }));
+
         it('should set and render items in dropdown panel with virtual scroll', fakeAsync(() => {
             const fixture = createTestingModule(
                 NgSelectTestCmp,
@@ -2922,6 +2971,7 @@ describe('NgSelectComponent', () => {
         let fixture: ComponentFixture<NgSelectTestCmp>;
         let select: NgSelectComponent;
         let input: HTMLInputElement;
+        let comboBoxDiv: HTMLDivElement;
 
         beforeEach(fakeAsync(() => {
             fixture = createTestingModule(
@@ -2933,6 +2983,7 @@ describe('NgSelectComponent', () => {
                 </ng-select>`);
             select = fixture.componentInstance.select;
             input = fixture.debugElement.query(By.css('input')).nativeElement;
+            comboBoxDiv = fixture.debugElement.query(By.css('.ng-input')).nativeElement;
         }));
 
         it('should set aria-activedescendant absent at start', fakeAsync(() => {
@@ -2941,7 +2992,7 @@ describe('NgSelectComponent', () => {
         }));
 
         it('should set aria-owns absent at start', fakeAsync(() => {
-            expect(input.hasAttribute('aria-owns'))
+            expect(comboBoxDiv.hasAttribute('aria-owns'))
                 .toBe(false);
         }));
 
@@ -2949,7 +3000,33 @@ describe('NgSelectComponent', () => {
             triggerKeyDownEvent(getNgSelectElement(fixture), KeyCode.Space);
             tickAndDetectChanges(fixture);
 
-            expect(input.getAttribute('aria-owns'))
+            expect(comboBoxDiv.getAttribute('aria-owns'))
+                .toBe(select.dropdownId);
+        }));
+
+        it('should set aria-expanded to false at start', fakeAsync(() => {
+            expect(comboBoxDiv.getAttribute('aria-expanded'))
+                .toBe('false');
+        }));
+
+        it('should set aria-expanded to true on open', fakeAsync(() => {
+            triggerKeyDownEvent(getNgSelectElement(fixture), KeyCode.Space);
+            tickAndDetectChanges(fixture);
+
+            expect(comboBoxDiv.getAttribute('aria-expanded'))
+                .toBe('true');
+        }));
+
+        it('should set aria-controls absent at start', fakeAsync(() => {
+            expect(input.hasAttribute('aria-controls'))
+                .toBe(false);
+        }));
+
+        it('should set aria-controls to dropdownId on open', fakeAsync(() => {
+            triggerKeyDownEvent(getNgSelectElement(fixture), KeyCode.Space);
+            tickAndDetectChanges(fixture);
+
+            expect(input.getAttribute('aria-controls'))
                 .toBe(select.dropdownId);
         }));
 
@@ -3428,6 +3505,31 @@ describe('NgSelectComponent', () => {
             });
         }));
 
+        it('should set correct dropdown panel horizontal position and width when appended to custom selector', async(() => {
+            const fixture = createTestingModule(
+                NgSelectTestCmp,
+                `
+                <div class="container" style="position: relative; overflow: auto; width: 200px; height: 200px">
+                    <div style="height: 100%">
+                        <ng-select [items]="cities"
+                            appendTo=".container"
+                            bindLabel="name"
+                            style="width: 50%; margin-left: auto"
+                            [(ngModel)]="selectedCity">
+                        </ng-select>
+                    </div>
+                </div>`);
+
+            fixture.componentInstance.select.open();
+            fixture.detectChanges();
+
+            fixture.whenStable().then(() => {
+                const dropdown = <HTMLElement>document.querySelector('.container .ng-dropdown-panel');
+                expect(dropdown.style.left).toBe('100px');
+                expect(dropdown.style.width).toBe('100px');
+            });
+        }));
+
         it('should apply global appendTo from NgSelectConfig', async(() => {
             const config = new NgSelectConfig();
             config.appendTo = 'body';
@@ -3705,7 +3807,7 @@ describe('NgSelectComponent', () => {
                 const elClasses: DOMTokenList = element.children[0].classList;
                 const hasClass = elClasses.contains('ng-select')
 
-            
+
             expect(hasClass).toBe(true)
         }));
         it('Should have class ng-select and test', fakeAsync(() => {
@@ -3724,8 +3826,37 @@ describe('NgSelectComponent', () => {
                 const elClasses: DOMTokenList = element.children[0].classList;
                 const hasClass = elClasses.contains('ng-select') && elClasses.contains('test');
 
-            
+
             expect(hasClass).toBe(true);
+        }));
+
+        it('should correctly update ng option selected property when groups map has undefined key', fakeAsync(() => {
+            const fixture = createTestingModule(
+              NgSelectGroupingTestCmp,
+              `<ng-select [items]="accounts"
+                        groupBy="group"
+                        bindLabel="name"
+                        bindValue="email"
+                        [(ngModel)]="selectedAccount"
+                        [class]="'test'">
+                </ng-select>`);
+
+            const select = fixture.componentInstance.select;
+            const nativeElement: HTMLElement = fixture.nativeElement as HTMLElement;
+
+            select.filter('Adam');
+            selectOption(fixture, KeyCode.ArrowDown, 0);
+            expect(fixture.componentInstance.selectedAccount).toBe('adam@email.com');
+
+            select.filter('Amalie');
+            selectOption(fixture, KeyCode.ArrowDown, 0);
+            expect(fixture.componentInstance.selectedAccount).toBe('amalie@email.com');
+
+            select.filter('A');
+            expect(nativeElement.querySelectorAll('.ng-option-selected').length).toBe(1, 2);
+            expect(select.viewPortItems.filter((opt => opt.selected)).length).toBe(1, 2);
+            expect(select.viewPortItems.find((opt => opt.selected)).index).toBe(2, 0);
+            expect(select.itemsList.selectedItems.length).toBe(1);
         }));
     });
 

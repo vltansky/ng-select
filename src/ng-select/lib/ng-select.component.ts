@@ -70,7 +70,6 @@ export type GroupValueFn = (key: string | object, children: any[]) => string | o
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: {
-        'role': 'listbox',
         '[class.ng-select]': 'useDefaultClass',
         '[class.ng-select-single]': '!multiple',
     }
@@ -198,6 +197,7 @@ export class NgSelectComponent implements OnDestroy, OnChanges, AfterViewInit, C
     private _compareWith: CompareWithFn;
     private _clearSearchOnAdd: boolean;
     private _isComposing = false;
+
     private get _editableSearchTerm(): boolean {
         return this.editableSearchTerm && !this.multiple;
     }
@@ -426,6 +426,7 @@ export class NgSelectComponent implements OnDestroy, OnChanges, AfterViewInit, C
             return;
         }
         this.isOpen = false;
+        this._isComposing = false;
         if (!this._editableSearchTerm) {
             this._clearSearch();
         } else {
@@ -681,7 +682,9 @@ export class NgSelectComponent implements OnDestroy, OnChanges, AfterViewInit, C
 
         const validateBinding = (item: any): boolean => {
             if (!isDefined(this.compareWith) && isObject(item) && this.bindValue) {
-                this._console.warn(`Binding object(${JSON.stringify(item)}) with bindValue is not allowed.`);
+                this._console.warn(
+                    `Setting object(${JSON.stringify(item)}) as your model with bindValue is not allowed unless [compareWith] is used.`
+                );
                 return false;
             }
             return true;
